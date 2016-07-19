@@ -261,7 +261,7 @@ static void trigger_none_process(uint8_t sock_state)
 		return;
 	}
 
-	if(uart_size_prev == RingBuffer_GetCount(&rxring)) {			// UART ?�신 ?�이?��? ?�으�?
+	if(uart_size_prev == RingBuffer_GetCount(&rxring)) {			// UART ?�신 ?�이?��? ?�으�?
 		if(trigger_flag == 0)
 			trigger_flag = 1;
 	} else {
@@ -613,31 +613,41 @@ void s2e_run(uint8_t sock)
 #endif
 
 	/* Serial Trigger Process */
-	switch(trigger_state) {
-		case TRIG_STATE_NONE:
-			trigger_none_process(sock_state);
-			break;
-		
-		case TRIG_STATE_READY:
-			trigger_ready_process();
-			break;
+	if(option->serial_command)
+	{
+		switch(trigger_state) {
+			case TRIG_STATE_NONE:
+				trigger_none_process(sock_state);
+				break;
+			
+			case TRIG_STATE_READY:
+				trigger_ready_process();
+				break;
 
-		case TRIG_STATE_1:
-			trigger_state1_process();
-			break;
+			case TRIG_STATE_1:
+				trigger_state1_process();
+				break;
 
-		case TRIG_STATE_2:
-			trigger_state2_process();
-			break;
+			case TRIG_STATE_2:
+				trigger_state2_process();
+				break;
 
-		case TRIG_STATE_3:
-			trigger_state3_process(sock);
-			if(op_mode == OP_COMMAND)
-				return;
-			break;
+			case TRIG_STATE_3:
+				trigger_state3_process(sock);
+				if(op_mode == OP_COMMAND)
+					return;
+				break;
 
-		default:
-			break;
+			default:
+				break;
+		}
+	}
+	else
+	{
+		if((sock_state != SOCK_ESTABLISHED) && (sock_state != SOCK_UDP) && (net->working_mode != TCP_MIXED_MODE)) {
+			UART_buffer_flush(&rxring);
+			uart_size_prev = 0;
+		}
 	}
 
 	/* Network State Process */
